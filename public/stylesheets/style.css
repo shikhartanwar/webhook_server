@@ -7,15 +7,17 @@ a {
   color: #00B7FF;
 }
 
-.logs{
+.logs {
   margin: 20px 0;
 }
-.list-group-item-head{
+
+.list-group-item-head {
   cursor: pointer;
   margin: -10px;
   padding: 10px;
 }
-.list-group-item-body{
+
+.list-group-item-body {
   margin-top: 10px;
   display: none;
 }

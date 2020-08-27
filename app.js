@@ -12,57 +12,52 @@ app.set('port', port);
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
-
 // uncomment after placing your favicon in /public
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 
-
 app.use(function (req, res, next) {
-    next();
+  next();
 });
 
 // Static iles
 app.use(express.static(path.join(__dirname, 'public')));
 
-
 // TODO: Move to separate files later
-
 
 // app.get('/', auth, function (req, res) {
 //   res.sendfile(path.join(__dirname, 'index.html'));
 // });
 
-app.use('/webhook', function(req, res) {
+app.use('/webhook', function (req, res) {
 
-var payload = {
-    headers : req.headers || {},
-		params : req.params || {},
-		query : req.query,
-		path: req.path,
-		protocol : req.protocol,
-		method: req.method,
-		body : req.body,
-		time : new Date()
-	};
+  var payload = {
+    headers: req.headers || {},
+    params: req.params || {},
+    query: req.query,
+    path: req.path,
+    protocol: req.protocol,
+    method: req.method,
+    body: req.body,
+    time: new Date()
+  };
 
-	io.sockets.emit('webhookEvent:' + req.path.replace('/', ''), payload);
-  
+  io.sockets.emit('webhookEvent:' + req.path.replace('/', ''), payload);
+
   io.sockets.emit('webhookEvent:all', payload);
-  
-	return res.send(req.query.challenge);
+
+  return res.send(req.query.challenge);
 });
 
-
 io.on('connection', function (socket) {
-  socket.emit('welcome', {});  
+  socket.emit('welcome', {});
 });
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
@@ -73,7 +68,7 @@ app.use(function(req, res, next) {
 // development error handler
 // will print stacktrace
 if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
+  app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.send({
       message: err.message,
@@ -84,7 +79,7 @@ if (app.get('env') === 'development') {
 
 // production error handler
 // no stacktraces leaked to user
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.send({
     message: err.message,
@@ -92,9 +87,7 @@ app.use(function(err, req, res, next) {
   });
 });
 
-
 module.exports = app;
-
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -134,8 +127,8 @@ function onError(error) {
   }
 
   var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+      ? 'Pipe ' + port
+      : 'Port ' + port;
 
   // handle specific listen errors with friendly messages
   switch (error.code) {
@@ -159,7 +152,7 @@ function onError(error) {
 function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
+      ? 'pipe ' + addr
+      : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
