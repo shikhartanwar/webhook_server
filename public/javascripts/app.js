@@ -7,7 +7,7 @@ $(function () {
 
   /* please update this to your own slack webhook incoming url
   and the appropriate slack channel */
-  var slackWebhook = "https://hooks.slack.com/services/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";
+  var slackWebhook = "https://hooks.slack.com/services/<unique_code>";
 
   var slackChannel = "aio-444-demo";
 
