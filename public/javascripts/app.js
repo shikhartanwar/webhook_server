@@ -7,9 +7,9 @@ $(function () {
 
   /* please update this to your own slack webhook incoming url
   and the appropriate slack channel */
-  var slackWebhook = "https://hooks.slack.com/services/<unique_code>";
+  var slackWebhook = "https://hooks.slack.com/services/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";
 
-  var slackChannel = "customer_service";
+  var slackChannel = "aio-444-demo";
 
   $('#connectForm').submit(function (e) {
 
@@ -34,20 +34,19 @@ $(function () {
         + webhookUrl + '</a>'));
 
     socket.on(currentUri, function (event, data) {
+      // console.log(currentUri, event, data);
       addLog(event);
-      //console.log(currentUri, event, data);
-      var mes;
-      var attachments_color_green = "#008000";
+      let mes;
+      let attachments_color_green = "#008000";
       try {
-        var payload = {
+        let slackText = getSlackText(event);
+        let payload = {
           "channel": slackChannel,
           "username": "incoming-webhook",
           "mrkdwn": true,
           "attachments": [{
-            "text": "A user with visitor_id " + event.body.trigger.mcId
-                + " has abandoned the cart. He visited these pages:\n"
-                + event.body.trigger.enrichments.analyticsHitSummary.dimensions.pageURL.data.join(
-                    "\r\n").replace("\r\n\r\n", "\r\n"),
+            // "text": "Test " + JSON.stringify(event.body),
+            "text": getSlackText(event),
             "fallback": "You have received a new message from io_triggers!",
             "color": attachments_color_green,
             "attachment_type": "default"
@@ -98,4 +97,32 @@ $(function () {
     });
   }
 
+  function getSlackText(event) {
+    let eventBody = event.body;
+    let eventData = eventBody["data"]["xdmEntity"]["event:resources"];
+    let repoMetadata = eventData["http://ns.adobe.com/adobecloud/rel/metadata/repository"]["event:embedded"];
+    let userId = repoMetadata["storage:assignee"]["id"];
+    let actionText = getEventActionText(eventBody["type"]);
+    let assetId = repoMetadata["repo:id"];
+    let assetVersion = repoMetadata["repo:version"];
+    let storageRegion = repoMetadata["storage:region"];
+    let slackText = `A Creative Cloud Library (\`${assetId}\`) was *${actionText}* by user *${userId}* in ${storageRegion} region.\n_Version_: ${assetVersion}`;
+    console.log(slackText);
+    return slackText;
+  }
+
+  function getEventActionText(action) {
+    let actionText;
+    switch (action) {
+      case "com.adobe.platform.events.cc_library_created":
+        actionText = "created";
+        break;
+      case "com.adobe.platform.events.cc_library_updated":
+        actionText = "updated";
+        break;
+      case "com.adobe.platform.events.cc_library_deleted":
+        actionText = "deleted";
+    }
+    return actionText;
+  }
 });
