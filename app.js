@@ -7,7 +7,7 @@ var bodyParser = require('body-parser');
 var debug = require('debug')('webhook-server:server');
 
 var app = express();
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || '80');
 app.set('port', port);
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
