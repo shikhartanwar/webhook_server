@@ -39,18 +39,42 @@ $(function () {
       let mes;
       let attachments_color_green = "#008000";
       try {
-        let slackText = getSlackText(event);
         let payload = {
           "channel": slackChannel,
-          "username": "incoming-webhook",
-          "mrkdwn": true,
-          "attachments": [{
-            // "text": "Test " + JSON.stringify(event.body),
-            "text": getSlackText(event),
-            "fallback": "You have received a new message from io_triggers!",
-            "color": attachments_color_green,
-            "attachment_type": "default"
-          }]
+          "blocks": [
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": getSection1SlackText(event)
+              },
+              "accessory": {
+                "type": "image",
+                "image_url": "https://user-images.githubusercontent.com/6910192/91432322-2fe13380-e87f-11ea-905d-6263d468957b.png",
+                "alt_text": "Creative Cloud"
+              }
+            },
+            {
+              "type": "context",
+              "elements": [
+                {
+                  "type": "mrkdwn",
+                  "text": getContextSectionSlackText(event)
+                }
+              ]
+            },
+            {
+              "type": "divider"
+            }
+          ]
+          // "username": "incoming-webhook",
+          // "mrkdwn": true,
+          // "attachments": [{
+          //   "text": getSlackText(event),
+          //   "fallback": "You have received a new message from cc_lib!",
+          //   "color": attachments_color_green,
+          //   "attachment_type": "default"
+          // }]
         };
         mes = JSON.stringify(payload);
       } catch (err) {
@@ -97,21 +121,69 @@ $(function () {
     });
   }
 
-  function getSlackText(event) {
-    let eventBody = event.body;
-    let eventData = eventBody["data"]["xdmEntity"]["event:resources"];
-    let repoMetadata = eventData["http://ns.adobe.com/adobecloud/rel/metadata/repository"]["event:embedded"];
+  function getSection1SlackText(event) {
+    let repoMetadata = getRepoMetadata(event);
     let userId = repoMetadata["storage:assignee"]["id"];
-    let actionText = getEventActionText(eventBody["type"]);
+    let actionText = getEventActionText(event);
     let assetId = repoMetadata["repo:id"];
-    let assetVersion = repoMetadata["repo:version"];
     let storageRegion = repoMetadata["storage:region"];
-    let slackText = `A Creative Cloud Library (\`${assetId}\`) was *${actionText}* by user *${userId}* in ${storageRegion} region.\n_Version_: ${assetVersion}`;
-    console.log(slackText);
-    return slackText;
+    let assetVersion = repoMetadata["repo:version"];
+    let eventResourceChangesText = getEventResourceChangesText(event);
+    return `A Creative Cloud Library was *${actionText}* by user *${userId}* in *${storageRegion}* region.\n\n_Asset Id_: \`${assetId}\`\n_Resource Changes:_${eventResourceChangesText}\n_Version: ${assetVersion}_`;
   }
 
-  function getEventActionText(action) {
+  function getContextSectionSlackText(event) {
+    let eventBody = event.body;
+    let requestId = eventBody["xactionid"];
+    let source = eventBody["source"];
+    return `:creativeresidency: Request Id: ${requestId}`;
+  }
+
+  function getEventResources(event) {
+    return event.body["data"]["xdmEntity"]["event:resources"];
+  }
+
+  function getRepoMetadata(event) {
+    let eventResources = getEventResources(event);
+    return eventResources["http://ns.adobe.com/adobecloud/rel/metadata/repository"]["event:embedded"];
+  }
+
+  function getEventResourceChangesText(event) {
+    let eventResources = getEventResources(event);
+    let eventResourceChangesText = "";
+    for (let prop in eventResources) {
+      if (eventResources.hasOwnProperty(prop)) {
+        let eventAction = titleCase(eventResources[prop]["event:action"]);
+        let resourceFriendlyName = getResourceFriendlyNameFromNamespaceKey(prop);
+        eventResourceChangesText += `\n\t- *${resourceFriendlyName}*: ${eventAction}`;
+      }
+    }
+    return eventResourceChangesText;
+  }
+
+  function getResourceFriendlyNameFromNamespaceKey(propName) {
+    switch(propName) {
+      case "http://ns.adobe.com/adobecloud/rel/manifest":
+        return "Composite Manifest";
+      case "http://ns.adobe.com/adobecloud/rel/component":
+        return "Composite Component";
+      case "http://ns.adobe.com/adobecloud/rel/metadata/embedded":
+        return "Embedded Metadata";
+      case "http://ns.adobe.com/adobecloud/rel/metadata/repository":
+        return "Repository Metadata";
+      case "http://ns.adobe.com/adobecloud/rel/metadata/application":
+        return "Application Metadata";
+      case "http://ns.adobe.com/adobecloud/rel/primary":
+        return "Primary Resource";
+      case "http://ns.adobe.com/adobecloud/rel/rendition":
+        return "Rendition";
+      case "http://ns.adobe.com/adobecloud/rel/repository":
+        return "Repository Resource";
+    }
+  }
+
+  function getEventActionText(event) {
+    let action = event.body["type"];
     let actionText;
     switch (action) {
       case "com.adobe.platform.events.cc_library_created":
@@ -124,5 +196,9 @@ $(function () {
         actionText = "deleted";
     }
     return actionText;
+  }
+
+  function titleCase(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 });
