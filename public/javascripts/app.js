@@ -37,11 +37,14 @@ $(function () {
       // console.log(currentUri, event, data);
       addLog(event);
       let mes;
-      let attachments_color_green = "#008000";
+      let attachments_color = "#c7c7c7";
       try {
         let payload = {
           "channel": slackChannel,
           "blocks": [
+            {
+              "type": "divider"
+            },
             {
               "type": "section",
               "text": {
@@ -62,17 +65,24 @@ $(function () {
                   "text": getContextSectionSlackText(event)
                 }
               ]
-            },
-            {
-              "type": "divider"
             }
-          ]
-          // "username": "incoming-webhook",
-          // "mrkdwn": true,
+          ],
+          "attachments": [{
+            "color": attachments_color,
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": getAttachmentText(event)
+                }
+              }
+            ]
+          }]
           // "attachments": [{
-          //   "text": getSlackText(event),
-          //   "fallback": "You have received a new message from cc_lib!",
-          //   "color": attachments_color_green,
+          //   "text": getAttachmentText(event),
+          //   "fallback": "You have received a new message from CC Libraries via I/O Events!",
+          //   "color": attachments_color,
           //   "attachment_type": "default"
           // }]
         };
@@ -94,7 +104,6 @@ $(function () {
   });
 
   function listen(uri) {
-
   }
 
   window.toggleListItem = function (item) {
@@ -116,7 +125,7 @@ $(function () {
         console.log("SUCCESS: " + data);
       },
       error: function (data) {
-        console.log("ERROR: " + data);
+        console.log("ERROR: " + data.responseText);
       }
     });
   }
@@ -154,7 +163,8 @@ $(function () {
     for (let prop in eventResources) {
       if (eventResources.hasOwnProperty(prop)) {
         let eventAction = titleCase(eventResources[prop]["event:action"]);
-        let resourceFriendlyName = getResourceFriendlyNameFromNamespaceKey(prop);
+        let resourceFriendlyName = getResourceFriendlyNameFromNamespaceKey(
+            prop);
         eventResourceChangesText += `\n\t- *${resourceFriendlyName}*: ${eventAction}`;
       }
     }
@@ -162,7 +172,7 @@ $(function () {
   }
 
   function getResourceFriendlyNameFromNamespaceKey(propName) {
-    switch(propName) {
+    switch (propName) {
       case "http://ns.adobe.com/adobecloud/rel/manifest":
         return "Composite Manifest";
       case "http://ns.adobe.com/adobecloud/rel/component":
@@ -198,7 +208,27 @@ $(function () {
     return actionText;
   }
 
+  function getAttachmentText(event) {
+    let jsonText = JSON.stringify(event.body, null, 1);
+    let truncatedText = truncate(jsonText, 2994);
+    return  "```" + truncatedText + "```";
+  }
+
   function titleCase(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function truncate(str, length, ending) {
+    if (length == null) {
+      length = 2994;
+    }
+    if (ending == null) {
+      ending = '...';
+    }
+    if (str.length > length) {
+      return str.substring(0, length - ending.length) + ending;
+    } else {
+      return str;
+    }
   }
 });
